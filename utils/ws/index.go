@@ -18,7 +18,7 @@ type ClientManager struct {
 type Client struct {
 	ID     string
 	Socket *websocket.Conn
-	Send   chan []byte
+	Msg    chan []byte
 }
 
 // Message is an object for websocket message which is mapped to json type
@@ -42,21 +42,21 @@ func (manager *ClientManager) Start() {
 		select {
 		case conn := <-manager.Register:
 			manager.Clients[conn] = true
-			jsonMessage, _ := json.Marshal(&Message{Content: "/A new socket has connected."})
+			jsonMessage, _ := json.Marshal(&Message{Content: "A new socket has connected."})
 			manager.Send(jsonMessage, conn)
 		case conn := <-manager.Unregister:
 			if _, ok := manager.Clients[conn]; ok {
-				close(conn.Send)
+				close(conn.Msg)
 				delete(manager.Clients, conn)
-				jsonMessage, _ := json.Marshal(&Message{Content: "/A socket has disconnected."})
+				jsonMessage, _ := json.Marshal(&Message{Content: "A socket has disconnected."})
 				manager.Send(jsonMessage, conn)
 			}
 		case message := <-manager.Broadcast:
 			for conn := range manager.Clients {
 				select {
-				case conn.Send <- message:
+				case conn.Msg <- message:
 				default:
-					close(conn.Send)
+					close(conn.Msg)
 					delete(manager.Clients, conn)
 				}
 			}
@@ -68,7 +68,7 @@ func (manager *ClientManager) Start() {
 func (manager *ClientManager) Send(message []byte, ignore *Client) {
 	for conn := range manager.Clients {
 		if conn != ignore {
-			conn.Send <- message
+			conn.Msg <- message
 		}
 	}
 }
@@ -94,7 +94,7 @@ func (c *Client) Read() {
 			}
 			break
 		}
-		jsonMessage, _ := json.Marshal(&Message{Sender: c.ID, Content: string(message)})
+		jsonMessage, _ := json.Marshal(&Message{Sender: "Broadcast Read c.ID: " + c.ID, Content: string(message)})
 		Manager.Broadcast <- jsonMessage
 	}
 }
@@ -110,7 +110,7 @@ func (c *Client) Write() {
 
 	for {
 		select {
-		case message, ok := <-c.Send:
+		case message, ok := <-c.Msg:
 			if !ok {
 				err := c.Socket.WriteMessage(websocket.CloseMessage, []byte{})
 				if err != nil {

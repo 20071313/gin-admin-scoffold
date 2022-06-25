@@ -15,19 +15,14 @@ func main() {
 	})
 
 	route.RegisterRoute(r)
-	//r.GET("/ws", func(context *gin.Context) {
-	//	context.JSON(200, gin.H{
-	//		"msg": "ws msg",
-	//		"":    "",
-	//	})
-	//})
 
-	var websocketClient ws.ClientManager
-	go websocketClient.Start()
+	go ws.Manager.Start()
 
-	err := r.Run()
+	// 监听并在 0.0.0.0:8080 上启动服务
+	err := r.Run("127.0.0.1:8080")
 
 	if err != nil {
 		return
-	} // 监听并在 0.0.0.0:8080 上启动服务
+	}
+
 }
