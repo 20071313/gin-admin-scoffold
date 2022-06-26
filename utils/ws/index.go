@@ -3,6 +3,7 @@ package ws
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/gorilla/websocket"
 )
 
@@ -19,6 +20,7 @@ type Client struct {
 	ID     string
 	Socket *websocket.Conn
 	Msg    chan []byte
+	Err    chan interface{}
 }
 
 // Message is an object for websocket message which is mapped to json type
@@ -65,9 +67,11 @@ func (manager *ClientManager) Start() {
 }
 
 // Send is to send ws message to ws client
-func (manager *ClientManager) Send(message []byte, ignore *Client) {
+func (manager *ClientManager) Send(message []byte, client *Client) {
+	msg := string(message)
+	fmt.Println("Send msg:", msg)
 	for conn := range manager.Clients {
-		if conn != ignore {
+		if conn == client {
 			conn.Msg <- message
 		}
 	}
@@ -78,7 +82,7 @@ func (c *Client) Read() {
 		Manager.Unregister <- c
 		err := c.Socket.Close()
 		if err != nil {
-			fmt.Println("ws err:", err.Error())
+			fmt.Println("defer ws err:", err.Error())
 			return
 		}
 	}()
@@ -89,13 +93,14 @@ func (c *Client) Read() {
 			Manager.Unregister <- c
 			err := c.Socket.Close()
 			if err != nil {
-				fmt.Println("ws err:", err.Error())
+				fmt.Println("for ws err:", err.Error())
 				return
 			}
 			break
 		}
-		jsonMessage, _ := json.Marshal(&Message{Sender: "Broadcast Read c.ID: " + c.ID, Content: string(message)})
-		Manager.Broadcast <- jsonMessage
+		fmt.Println("socket read msg: ", string(message))
+		//jsonMessage, _ := json.Marshal(&Message{Sender: "Broadcast Read c.ID: " + c.ID, Content: string(message)})
+		//Manager.Broadcast <- jsonMessage
 	}
 }
 
@@ -114,12 +119,16 @@ func (c *Client) Write() {
 			if !ok {
 				err := c.Socket.WriteMessage(websocket.CloseMessage, []byte{})
 				if err != nil {
-					fmt.Println("ws err:", err.Error())
+					fmt.Println("write ws err:", err.Error())
+					c.Err <- 1
+					close(c.Msg)
 					return
 				}
+				c.Err <- 0
 				return
 			}
-
+			msg := string(message)
+			fmt.Println("Write msg:", msg)
 			err := c.Socket.WriteMessage(websocket.TextMessage, message)
 			if err != nil {
 				fmt.Println("ws err:", err.Error())

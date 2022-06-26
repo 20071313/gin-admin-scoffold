@@ -13,7 +13,7 @@ type TestData struct {
 
 // json.Marshal ： 是将结构体转为json格式的字节码，通过string函数把字节码转换为 json格式的字符串
 // json.Unmarshal: 是将 json 格式的字节码转换为 结构体，并必须存储到结构体的引用中
-func main() {
+func testJson() {
 	data := TestData{
 		ID:   0,
 		Msg:  "OK",
