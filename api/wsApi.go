@@ -72,10 +72,11 @@ func generateData() (result string) {
 		Date    string
 	}
 
+	nowTime := time.Now().Format("2006-01-02 15:04:05")
 	resultByte, _ := json.Marshal(&msg{
 		Id:      "fadsafd",
-		Content: generateMd5Str(time.Now().Format("2006-01-02 15:04:05")),
-		Date:    time.Now().Format("2006-01-02 15:04:05"),
+		Content: generateMd5Str(nowTime),
+		Date:    nowTime,
 	})
 	result = string(resultByte)
 	return result
