@@ -5,15 +5,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/gin-admin-scoffold/utils/ws"
 	"net/http"
 	"time"
 
-	"github.com/spf13/cast"
-
-	"github.com/gin-admin-scoffold/utils/ws"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
+	"github.com/spf13/cast"
 )
 
 // WsPage is a websocket handler
